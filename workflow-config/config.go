@@ -23,14 +23,9 @@ type Configuration struct {
 	DbPassword     string
 	DbMaxIdleConns string
 	DbMaxOpenConns string
-	// redis 设置
-	RedisCluster  string
-	RedisHost     string
-	RedisPort     string
-	RedisPassword string
-	TLSOpen       string
-	TLSCrt        string
-	TLSKey        string
+	TLSOpen        string
+	TLSCrt         string
+	TLSKey         string
 	// 跨域设置
 	AccessControlAllowOrigin  string
 	AccessControlAllowHeaders string

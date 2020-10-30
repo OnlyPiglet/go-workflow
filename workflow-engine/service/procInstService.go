@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"sync"
 	"time"
 
@@ -69,55 +68,6 @@ func FindAllPageAsJSON(pr *ProcessPageReceiver) (string, error) {
 		return "", err
 	}
 	return util.ToPageJSON(datas, count, pr.PageIndex, pr.PageSize)
-}
-
-// FindMyProcInstByToken FindMyProcInstByToken
-// 根据token获取流程信息
-func FindMyProcInstByToken(token string, receiver *ProcessPageReceiver) (string, error) {
-	// 根据 token 获取用户信息
-	userinfo, err := GetUserinfoFromRedis(token)
-	if err != nil {
-		return "", err
-	}
-	if len(userinfo.Company) == 0 {
-		return "", errors.New("保存在redis中的【用户信息 userinfo】字段 company 不能为空")
-	}
-	if len(userinfo.ID) == 0 {
-		return "", errors.New("保存在redis中的【用户信息 userinfo】字段 ID 不能为空")
-	}
-	receiver.Company = userinfo.Company
-	receiver.Departments = userinfo.Departments
-	receiver.Groups = userinfo.Roles
-	receiver.UserID = userinfo.ID
-	// str, _ = util.ToJSONStr(receiver)
-	// fmt.Printf("receiver:%s\n", str)
-	return FindAllPageAsJSON(receiver)
-}
-
-// StartProcessInstanceByToken 启动流程
-func StartProcessInstanceByToken(token string, p *ProcessReceiver) (int, error) {
-	// 根据 token 获取用户信息
-	userinfo, err := GetUserinfoFromRedis(token)
-	if err != nil {
-		return 0, err
-	}
-	if len(userinfo.Company) == 0 {
-		return 0, errors.New("保存在redis中的【用户信息 userinfo】字段 company 不能为空")
-	}
-	if len(userinfo.Username) == 0 {
-		return 0, errors.New("保存在redis中的【用户信息 userinfo】字段 username 不能为空")
-	}
-	if len(userinfo.ID) == 0 {
-		return 0, errors.New("保存在redis中的【用户信息 userinfo】字段 ID 不能为空")
-	}
-	if len(userinfo.Department) == 0 {
-		return 0, errors.New("保存在redis中的【用户信息 userinfo】字段 department 不能为空")
-	}
-	p.Company = userinfo.Company
-	p.Department = userinfo.Department
-	p.UserID = userinfo.ID
-	p.Username = userinfo.Username
-	return p.StartProcessInstanceByID(p.Var)
 }
 
 // StartProcessInstanceByID 启动流程

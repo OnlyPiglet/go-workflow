@@ -35,47 +35,6 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
   如果返回：{"data":"1","ok":true} ，1表示流程实例的id,true表示成功了
 
-
-  ---------------------------------------------------------------
-  或 通过 POST 访问： http://localhost:8080/api/v1/workflow/procdef/saveByToken (后台通过 token 从redis查询用户信息 userinfo，token可以保存在 Authorization 里
-  面 或者 reques参数里)
-
-// UserInfo 用户信息
-
-  type UserInfo struct {
-
-    Company string `json:"company"`
-
-    // 用户所属部门
-
-    Department string `json:"department"`
-
-    // 用户ID
-
-    ID string `json:"ID"`
-    
-    Username   string `json:"username"`
-
-    // 用户的角色
-
-    Roles []string `json:"roles"`
-
-    // 用户负责的部门，用户是哪些部门的主管
-
-    Departments []string `json:"departments"`
-
-  }
-
-  在config.json 里 配置 redis 连接：
-
-  "RedisCluster": "false",  // false表示redis是单点，true表示redis是集群
-
-  "RedisHost": "localhost",
-
-  "RedisPort": "6379",
-  
-  "RedisPassword": "",
-
 --------------------------------------------------------------
 
 # 2.2 查询流程定义
@@ -96,7 +55,7 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 # 4.审批
 
 # 4.1 审批
-  通过POST访问：http://localhost:8080/workflow/task/complete
+  通过POST访问：http://localhost:8080/api/v1/workflow/task/complete
 
   POST参数：{"taskID":2,"pass":"true","userID":"11029","company":"A公司","comment": "评论备注","candidate": "王五"}
 
@@ -105,7 +64,7 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
   （注意：整个流程框架，所有关于 userID的值最好是用户名，用户名不可重复）
 # 4.2 撤回
 
-  通过POST访问：http://localhost:8080/workflow/task/withdraw
+  通过POST访问：http://localhost:8080/api/v1/workflow/task/withdraw
 
   POST参数：{"taskID":2,"userID":"11029","procInstID":1,"company":"A公司"}
 
@@ -113,7 +72,7 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
 # 4.3 任务查询 
 
-  通过POST访问 ：http://localhost:8080/workflow/process/findTask
+  通过POST访问 ：http://localhost:8080/api/v1/workflow/process/findTask
   
   POST参数：{"userID":"11025","groups":["人事"],"departments":["技术中心"],"company":"A公司","procName": "请假","pageIndex":1,"pageSize":10}
 
@@ -124,7 +83,7 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
 # 4.4 查询流程审批人与评论
   
-  通过GET访问 ：http://localhost:8080/workflow/identitylink/findParticipant?procInstID=12562
+  通过GET访问 ：http://localhost:8080/api/v1/workflow/identitylink/findParticipant?procInstID=12562
 
   参数详解： procInstID 为流程实例id
 
@@ -162,7 +121,7 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
 -----------------  已结束-------------------------
 
-  通过POST访问：http://localhost:8080/workflow/procHistory/FindProcNotify
+  通过POST访问：http://localhost:8080/api/v1/workflow/procHistory/FindProcNotify
 
   POST参数：{"userID":"admin","company":"A公司","groups":["人事","产品经理"]}
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strconv"
 	"sync"
 	"time"
 
@@ -62,23 +61,6 @@ func GetTaskByID(id int) (task *model.Task, err error) {
 // GetTaskLastByProInstID GetTaskLastByProInstID
 func GetTaskLastByProInstID(procInstID int) (*model.Task, error) {
 	return model.GetTaskLastByProInstID(procInstID)
-}
-
-// CompleteByToken 通过token 审批任务
-func CompleteByToken(token string, receiver *TaskReceiver) error {
-	userinfo, err := GetUserinfoFromRedis(token)
-	if err != nil {
-		return err
-	}
-	pass, err := strconv.ParseBool(receiver.Pass)
-	if err != nil {
-		return err
-	}
-	err = Complete(receiver.TaskID, userinfo.ID, userinfo.Username, userinfo.Company, receiver.Comment, receiver.Candidate, pass)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // Complete Complete
@@ -183,24 +165,6 @@ func CompleteTaskTx(taskID int, userID, username, company, comment, candidate st
 	}
 
 	return nil
-}
-
-// WithDrawTaskByToken 撤回任务
-func WithDrawTaskByToken(token string, receiver *TaskReceiver) error {
-	userinfo, err := GetUserinfoFromRedis(token)
-	if err != nil {
-		return err
-	}
-	if len(userinfo.ID) == 0 {
-		return errors.New("保存在redis中的【用户信息 userinfo】字段 ID 不能为空！！")
-	}
-	if len(userinfo.Username) == 0 {
-		return errors.New("保存在redis中的【用户信息 userinfo】字段 username 不能为空！！")
-	}
-	if len(userinfo.Company) == 0 {
-		return errors.New("保存在redis中的【用户信息 userinfo】字段 company 不能为空")
-	}
-	return WithDrawTask(receiver.TaskID, receiver.ProcInstID, userinfo.ID, userinfo.Username, userinfo.Company, receiver.Comment)
 }
 
 // WithDrawTask 撤回任务

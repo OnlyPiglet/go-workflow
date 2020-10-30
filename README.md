@@ -1,19 +1,3 @@
-<p align="center">
-  <a href="">
-    <img width="200" height="200" src="https://github.com/go-workflow/go-workflow/blob/master/images/go.jpg">
-  </a>
-</p>
-<p align="center">
-  <a href="https://www.apache.org/licenses/LICENSE-2.0.html">
-    <img src="https://img.shields.io/badge/license-Apache%202-4EB1BA.svg" alt="Apache">
-  </a>
-  <a href="https://github.com/go-workflow/go-workflow/blob/master/EXAMPLE.md">
-    <img src="https://img.shields.io/badge/go-documentation-blue.svg?style=flat-square" alt="example">
-  </a>
-</p>
-
-<br>
-
 <h1 align="center"><bold>Go-Workflow</bold></h1>
 
 <p>go-workflow 是一个超轻量级的工作流引擎,基本架构同Activiti工作流有些相似，但是它更精简，更轻量，它是一个工作流微服务，具体案例详见：example.md</p>
