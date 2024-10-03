@@ -1,4 +1,4 @@
-module github.com/go-workflow/go-workflow
+module github.com/OnlyPiglet/go-workflow
 
 go 1.13
 

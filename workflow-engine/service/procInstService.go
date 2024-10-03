@@ -6,8 +6,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/go-workflow/go-workflow/workflow-engine/flow"
-	"github.com/go-workflow/go-workflow/workflow-engine/model"
+	"github.com/OnlyPiglet/go-workflow/workflow-engine/flow"
+	"github.com/OnlyPiglet/go-workflow/workflow-engine/model"
 	"github.com/mumushuiding/util"
 )
 

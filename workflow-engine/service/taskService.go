@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-workflow/go-workflow/workflow-engine/flow"
+	"github.com/OnlyPiglet/go-workflow/workflow-engine/flow"
 
 	"github.com/jinzhu/gorm"
 
-	"github.com/go-workflow/go-workflow/workflow-engine/model"
+	"github.com/OnlyPiglet/go-workflow/workflow-engine/model"
 	"github.com/mumushuiding/util"
 )
 
@@ -303,7 +303,7 @@ func MoveStage(nodeInfos []*flow.NodeInfo, userID, username, company, comment, c
 }
 
 // MoveToNextStage MoveToNextStage
-//通过
+// 通过
 func MoveToNextStage(nodeInfos []*flow.NodeInfo, userID, company string, currentTaskID, procInstID, step int, tx *gorm.DB) error {
 	var currentTime = util.FormatDate(time.Now(), util.YYYY_MM_DD_HH_MM_SS)
 	var task = getNewTask(nodeInfos, step, procInstID, currentTime) //新任务
