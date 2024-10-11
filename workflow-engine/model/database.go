@@ -2,87 +2,88 @@ package model
 
 import (
 	"fmt"
-	"log"
-	"strconv"
-
 	config "github.com/OnlyPiglet/go-workflow/workflow-config"
-
-	"github.com/jinzhu/gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
+	"log"
+	"os"
+	"time"
 
 	// mysql
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var db *gorm.DB
-
-// Model 其它数据结构的公共部分
-type Model struct {
-	ID int `gorm:"primary_key" json:"id,omitempty"`
-}
+var DB *gorm.DB
 
 // 配置
 var conf = *config.Config
 
 // Setup 初始化一个db连接
 func Setup() {
+	newLogger := gormLogger.New(log.New(os.Stdout, "\r\n", 0), gormLogger.Config{
+		LogLevel: gormLogger.Info,
+		Colorful: true,
+	})
+	//log.New(flog.DefaultLogger.GetWriter(), "\r\n", log.LstdFlags), // io writer
+	//gormLogger.Config{
+	//	SlowThreshold:             3 * time.Second, // Slow SQL threshold
+	//	LogLevel:                  logLevel,        // Log level
+	//	IgnoreRecordNotFoundError: true,            // Ignore ErrRecordNotFound error for logger
+	//	Colorful:                  true,            // Disable color
+	//},
+	//)
 	var err error
 	log.Println("数据库初始化！！")
-	db, err = gorm.Open(conf.DbType, fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.DbUser, conf.DbPassword, conf.DbHost, conf.DbPort, conf.DbName))
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", "root", "12345678", "127.0.0.1", "3306", "workflow")
+	idb, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger:                                   newLogger,
+		DisableForeignKeyConstraintWhenMigrating: false,
+	})
+	//db, err = gorm.Open("mysql", fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.DbUser, conf.DbPassword, conf.DbHost, conf.DbPort, conf.DbName))
 	if err != nil {
 		log.Fatalf("数据库连接失败 err: %v", err)
 	}
+	DB, err := idb.DB()
+
+	DB.SetMaxOpenConns(10)
+	DB.SetMaxIdleConns(5)
+	DB.SetConnMaxLifetime(30 * time.Second)
 	// 启用Logger，显示详细日志
-	mode, _ := strconv.ParseBool(conf.DbLogMode)
+	SetUpWithDb(idb)
+}
 
-	db.LogMode(mode)
-
-	db.SingularTable(true) //全局设置表名不可以为复数形式
-	// db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForCreateCallback)
-	idle, err := strconv.Atoi(conf.DbMaxIdleConns)
+func SetUpWithDb(db *gorm.DB) {
+	db = db
+	err := db.AutoMigrate(&Procdef{},
+		&Execution{},
+		&Task{},
+		&Identitylink{},
+		&ProcInst{},
+		&ExecutionHistory{},
+		&IdentitylinkHistory{},
+		&ProcInstHistory{},
+		&TaskHistory{},
+		&ProcdefHistory{})
 	if err != nil {
 		panic(err)
+		return
 	}
-	db.DB().SetMaxIdleConns(idle)
-	open, err := strconv.Atoi(conf.DbMaxOpenConns)
-	if err != nil {
-		panic(err)
-	}
-	db.DB().SetMaxOpenConns(open)
-
-	db.Set("gorm:table_options", "ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;").AutoMigrate(&Procdef{}).
-		AutoMigrate(&Execution{}).AutoMigrate(&Task{}).
-		AutoMigrate(&ProcInst{}).AutoMigrate(&Identitylink{}).
-		AutoMigrate(&ExecutionHistory{}).
-		AutoMigrate(&IdentitylinkHistory{}).
-		AutoMigrate(&ProcInstHistory{}).
-		AutoMigrate(&TaskHistory{}).
-		AutoMigrate(&ProcdefHistory{})
-	db.Model(&Procdef{}).AddIndex("idx_id", "id")
-	db.Model(&ProcInst{}).AddIndex("idx_id", "id")
-	db.Model(&Execution{}).AddForeignKey("proc_inst_id", "proc_inst(id)", "CASCADE", "RESTRICT").AddIndex("idx_id", "id")
-	db.Model(&Identitylink{}).AddForeignKey("proc_inst_id", "proc_inst(id)", "CASCADE", "RESTRICT").AddIndex("idx_id", "id")
-	db.Model(&Task{}).AddForeignKey("proc_inst_id", "proc_inst(id)", "CASCADE", "RESTRICT").AddIndex("idx_id", "id")
-	//---------------------历史纪录------------------------------
-	db.Model(&ProcInstHistory{}).AddIndex("idx_id", "id")
-	db.Model(&ExecutionHistory{}).AddForeignKey("proc_inst_id", "proc_inst_history(id)", "CASCADE", "RESTRICT").AddIndex("idx_id", "id")
-	db.Model(&IdentitylinkHistory{}).AddForeignKey("proc_inst_id", "proc_inst_history(id)", "CASCADE", "RESTRICT").AddIndex("idx_id", "id")
-	db.Model(&TaskHistory{}).
-		//  AddForeignKey("proc_inst_id", "proc_inst_history(id)", "CASCADE", "RESTRICT").
-		AddIndex("idx_id", "id")
-	// db.Model(&Comment{}).AddForeignKey("proc_inst_id", "proc_inst(id)", "CASCADE", "RESTRICT")
+	DB = db
 }
 
 // CloseDB closes database connection (unnecessary)
 func CloseDB() {
-	defer db.Close()
+	//defer db.Close()
 }
 
 // GetDB getdb
 func GetDB() *gorm.DB {
-	return db
+	return DB
 }
 
 // GetTx GetTx
 func GetTx() *gorm.DB {
-	return db.Begin()
+	return DB.Begin()
 }

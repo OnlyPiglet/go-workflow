@@ -3,8 +3,8 @@ package model
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/mumushuiding/util"
+	"gorm.io/gorm"
 )
 
 // Execution 流程实例（执行流）表
@@ -12,24 +12,29 @@ import (
 // BusinessKey 启动业务时指定的业务主键
 // ProcDefID 流程定义数据的ID
 type Execution struct {
-	Model
-	Rev         int    `json:"rev"`
-	ProcInstID  int    `json:"procInstID"`
-	ProcDefID   int    `json:"procDefID"`
-	ProcDefName string `json:"procDefName"`
+	gorm.Model
+	Rev         int      `json:"rev"`
+	ProcInstID  uint     `json:"procInstID"`
+	ProcInst    ProcInst `json:"procInst" gorm:"references:ID;foreignKey:ProcInstID;constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
+	ProcDefID   uint     `json:"procDefID"`
+	ProcDefName string   `json:"procDefName"`
 	// NodeInfos 执行流经过的所有节点
 	NodeInfos string `gorm:"size:4000" json:"nodeInfos"`
 	IsActive  int8   `json:"isActive"`
 	StartTime string `json:"startTime"`
 }
 
+func (t *Execution) TableName() string {
+	return "execution"
+}
+
 // Save save
 func (p *Execution) Save() (ID int, err error) {
-	err = db.Create(p).Error
+	err = GetDB().Create(p).Error
 	if err != nil {
 		return 0, err
 	}
-	return p.ID, nil
+	return int(p.ID), nil
 }
 
 // SaveTx SaveTx
@@ -39,14 +44,14 @@ func (p *Execution) SaveTx(tx *gorm.DB) (ID int, err error) {
 	if err := tx.Create(p).Error; err != nil {
 		return 0, err
 	}
-	return p.ID, nil
+	return int(p.ID), nil
 }
 
 // GetExecByProcInst GetExecByProcInst
 // 根据流程实例id查询执行流
 func GetExecByProcInst(procInstID int) (*Execution, error) {
 	var p = &Execution{}
-	err := db.Where("proc_inst_id=?", procInstID).Find(p).Error
+	err := GetDB().Where("proc_inst_id=?", procInstID).Find(p).Error
 	// log.Printf("procdef:%v,err:%v", p, err)
 	if err == gorm.ErrRecordNotFound {
 		return nil, nil
@@ -61,7 +66,7 @@ func GetExecByProcInst(procInstID int) (*Execution, error) {
 // 根据流程实例procInstID查询执行流经过的所有节点信息
 func GetExecNodeInfosByProcInstID(procInstID int) (string, error) {
 	var e = &Execution{}
-	err := db.Select("node_infos").Where("proc_inst_id=?", procInstID).Find(e).Error
+	err := GetDB().Select("node_infos").Where("proc_inst_id=?", procInstID).Find(e).Error
 	// fmt.Println(e)
 	if err != nil {
 		return "", err
@@ -83,4 +88,25 @@ func ExistsExecByProcInst(procInst int) (bool, error) {
 		return false, err
 	}
 	return false, nil
+}
+
+type User struct {
+	gorm.Model
+	Name      string
+	CompanyID string
+	Company   Company `gorm:"references:Code"` // use Code as references
+}
+
+func (t *User) TableName() string {
+	return "user"
+}
+
+type Company struct {
+	ID   int
+	Code string
+	Name string
+}
+
+func (t *Company) TableName() string {
+	return "company"
 }

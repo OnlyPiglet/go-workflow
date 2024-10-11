@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"github.com/OnlyPiglet/go-workflow/workflow-engine/flow"
-
-	"github.com/jinzhu/gorm"
-
 	"github.com/OnlyPiglet/go-workflow/workflow-engine/model"
 	"github.com/mumushuiding/util"
+	"gorm.io/gorm"
 )
 
 // TaskReceiver 任务
@@ -148,7 +146,7 @@ func CompleteTaskTx(taskID int, userID, username, company, comment, candidate st
 	// 查看任务的未审批人数是否为0，不为0就不流转
 	if task.UnCompleteNum > 0 && pass == true { // 默认是全部通过
 		// 添加参与人
-		err := AddParticipantTx(userID, username, company, comment, task.ID, task.ProcInstID, task.Step, tx)
+		err := AddParticipantTx(userID, username, company, comment, int(task.ID), task.ProcInstID, task.Step, tx)
 		if err != nil {
 			return err
 		}
@@ -159,7 +157,7 @@ func CompleteTaskTx(taskID int, userID, username, company, comment, candidate st
 	// if err != nil {
 	// 	return err
 	// }
-	err = MoveStageByProcInstID(userID, username, company, comment, candidate, task.ID, task.ProcInstID, task.Step, pass, tx)
+	err = MoveStageByProcInstID(userID, username, company, comment, candidate, int(task.ID), task.ProcInstID, task.Step, pass, tx)
 	if err != nil {
 		return err
 	}
@@ -231,7 +229,7 @@ func WithDrawTask(taskID, procInstID int, userID, username, company, comment str
 		return err
 	}
 	// 撤回
-	err = MoveStageByProcInstID(userID, username, company, comment, "", currentTask.ID, procInstID, currentTask.Step, pass, tx)
+	err = MoveStageByProcInstID(userID, username, company, comment, "", int(currentTask.ID), procInstID, currentTask.Step, pass, tx)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -311,7 +309,7 @@ func MoveToNextStage(nodeInfos []*flow.NodeInfo, userID, company string, current
 		NodeID:    nodeInfos[step].NodeID,
 		Candidate: nodeInfos[step].Aprover,
 	}
-	procInst.ID = procInstID
+	procInst.ID = uint(procInstID)
 	if (step + 1) != len(nodeInfos) { // 下一步不是【结束】
 		// 生成新的任务
 		taksID, err := task.NewTaskTx(tx)
@@ -369,7 +367,7 @@ func MoveToPrevStage(nodeInfos []*flow.NodeInfo, userID, company string, current
 		Candidate: nodeInfos[step].Aprover,
 		TaskID:    taksID,
 	}
-	procInst.ID = procInstID
+	procInst.ID = uint(procInstID)
 	err = UpdateProcInst(procInst, tx)
 	if err != nil {
 		return err

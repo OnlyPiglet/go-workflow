@@ -51,7 +51,7 @@ func GetResourceByNameAndCompany(name, company string) (*flow.Node, int, string,
 	}
 	node := &flow.Node{}
 	err = util.Str2Struct(prodef.Resource, node)
-	return node, prodef.ID, prodef.Name, err
+	return node, int(prodef.ID), prodef.Name, err
 }
 
 // GetResourceByID GetResourceByID
@@ -63,7 +63,7 @@ func GetResourceByID(id int) (*flow.Node, int, error) {
 	}
 	node := &flow.Node{}
 	err = util.Str2Struct(prodef.Resource, node)
-	return node, prodef.ID, err
+	return node, int(prodef.ID), err
 }
 
 // SaveProcdef 保存
@@ -111,13 +111,13 @@ func SaveProcdef(p *model.Procdef) (id int, err error) {
 		return 0, err
 	}
 	// 转移旧版本
-	err = model.MoveProcdefToHistoryByIDTx(old.ID, tx)
+	err = model.MoveProcdefToHistoryByIDTx(int(old.ID), tx)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
 	}
 	tx.Commit()
-	return p.ID, nil
+	return int(p.ID), nil
 }
 
 // ExistsProcdefByNameAndCompany if exists
@@ -138,11 +138,11 @@ func (p *Procdef) FindAllPageAsJSON() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return util.ToPageJSON(datas, count, p.PageIndex, p.PageSize)
+	return util.ToPageJSON(datas, int(count), p.PageIndex, p.PageSize)
 }
 
 // FindAll FindAll
-func (p *Procdef) FindAll() ([]*model.Procdef, int, error) {
+func (p *Procdef) FindAll() ([]*model.Procdef, int64, error) {
 	var page = util.Page{}
 	page.PageRequest(p.PageIndex, p.PageSize)
 	maps := p.getMaps()

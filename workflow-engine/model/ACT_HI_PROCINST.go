@@ -1,15 +1,14 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"strings"
 	"sync"
-
-	"github.com/jinzhu/gorm"
 )
 
 // ProcInst 流程实例
 type ProcInst struct {
-	Model
+	gorm.Model
 	// 流程定义ID
 	ProcDefID int `json:"procDefId"`
 	// 流程定义名
@@ -31,6 +30,10 @@ type ProcInst struct {
 	StartUserID   string `json:"startUserId"`
 	StartUserName string `json:"startUserName"`
 	IsFinished    bool   `gorm:"default:false" json:"isFinished"`
+}
+
+func (t *ProcInst) TableName() string {
+	return "proc_inst"
 }
 
 // GroupsNotNull 候选组
@@ -69,7 +72,7 @@ func StartByMyself(userID, company string, pageIndex, pageSize int) ([]*ProcInst
 // FindProcInstByID FindProcInstByID
 func FindProcInstByID(id int) (*ProcInst, error) {
 	var data = ProcInst{}
-	err := db.Where("id=?", id).Find(&data).Error
+	err := GetDB().Where("id=?", id).Find(&data).Error
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +82,7 @@ func FindProcInstByID(id int) (*ProcInst, error) {
 // FindProcNotify 查询抄送我的流程
 func FindProcNotify(userID, company string, groups []string, pageIndex, pageSize int) ([]*ProcInst, int, error) {
 	var datas []*ProcInst
-	var count int
+	var count int64
 	var sql string
 	if len(groups) != 0 {
 		var s []string
@@ -90,28 +93,28 @@ func FindProcNotify(userID, company string, groups []string, pageIndex, pageSize
 	} else {
 		sql = "select proc_inst_id from identitylink i where i.type='notifier' and i.company='" + company + "' and i.user_id='" + userID + "'"
 	}
-	err := db.Where("id in (" + sql + ")").Offset((pageIndex - 1) * pageSize).Limit(pageSize).Order("start_time desc").Find(&datas).Error
+	err := GetDB().Where("id in (" + sql + ")").Offset((pageIndex - 1) * pageSize).Limit(pageSize).Order("start_time desc").Find(&datas).Error
 	if err != nil {
-		return datas, count, err
+		return datas, int(count), err
 	}
-	err = db.Model(&ProcInst{}).Where("id in (" + sql + ")").Count(&count).Error
+	err = GetDB().Model(&ProcInst{}).Where("id in (" + sql + ")").Count(&count).Error
 	if err != nil {
-		return nil, count, err
+		return nil, int(count), err
 	}
-	return datas, count, err
+	return datas, int(count), err
 }
 func findProcInsts(maps map[string]interface{}, pageIndex, pageSize int) ([]*ProcInst, int, error) {
 	var datas []*ProcInst
-	var count int
+	var count int64
 	selectDatas := func(in chan<- error, wg *sync.WaitGroup) {
 		go func() {
-			err := db.Where(maps).Offset((pageIndex - 1) * pageSize).Limit(pageSize).Order("start_time desc").Find(&datas).Error
+			err := GetDB().Where(maps).Offset((pageIndex - 1) * pageSize).Limit(pageSize).Order("start_time desc").Find(&datas).Error
 			in <- err
 			wg.Done()
 		}()
 	}
 	selectCount := func(in chan<- error, wg *sync.WaitGroup) {
-		err := db.Model(&ProcInst{}).Where(maps).Count(&count).Error
+		err := GetDB().Model(&ProcInst{}).Where(maps).Count(&count).Error
 		in <- err
 		wg.Done()
 	}
@@ -132,14 +135,14 @@ func findProcInsts(maps map[string]interface{}, pageIndex, pageSize int) ([]*Pro
 		}
 	}
 	// fmt.Println("结束")
-	return datas, count, err1
+	return datas, int(count), err1
 }
 
 // FindProcInsts FindProcInsts
 // 分页查询
 func FindProcInsts(userID, procName, company string, groups, departments []string, pageIndex, pageSize int) ([]*ProcInst, int, error) {
 	var datas []*ProcInst
-	var count int
+	var count int64
 	var sql = " company='" + company + "' and is_finished=0 "
 	if len(procName) > 0 {
 		sql += "and proc_def_name='" + procName + "'"
@@ -147,7 +150,7 @@ func FindProcInsts(userID, procName, company string, groups, departments []strin
 	// fmt.Println(sql)
 	selectDatas := func(in chan<- error, wg *sync.WaitGroup) {
 		go func() {
-			err := db.Scopes(GroupsNotNull(groups, sql), DepartmentsNotNull(departments, sql)).
+			err := GetDB().Scopes(GroupsNotNull(groups, sql), DepartmentsNotNull(departments, sql)).
 				Or("candidate=? and "+sql, userID).
 				Offset((pageIndex - 1) * pageSize).Limit(pageSize).
 				Order("start_time desc").
@@ -158,7 +161,7 @@ func FindProcInsts(userID, procName, company string, groups, departments []strin
 	}
 	selectCount := func(in chan<- error, wg *sync.WaitGroup) {
 		go func() {
-			err := db.Scopes(GroupsNotNull(groups, sql), DepartmentsNotNull(departments, sql)).Model(&ProcInst{}).Or("candidate=? and "+sql, userID).Count(&count).Error
+			err := GetDB().Scopes(GroupsNotNull(groups, sql), DepartmentsNotNull(departments, sql)).Model(&ProcInst{}).Or("candidate=? and "+sql, userID).Count(&count).Error
 			in <- err
 			wg.Done()
 		}()
@@ -181,30 +184,30 @@ func FindProcInsts(userID, procName, company string, groups, departments []strin
 		}
 	}
 	// fmt.Println("结束")
-	return datas, count, err1
+	return datas, int(count), err1
 }
 
 // Save save
 func (p *ProcInst) Save() (int, error) {
-	err := db.Create(p).Error
+	err := GetDB().Create(p).Error
 	if err != nil {
 		return 0, err
 	}
-	return p.ID, nil
+	return int(p.ID), nil
 }
 
-//SaveTx SaveTx
+// SaveTx SaveTx
 func (p *ProcInst) SaveTx(tx *gorm.DB) (int, error) {
 	if err := tx.Create(p).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
-	return p.ID, nil
+	return int(p.ID), nil
 }
 
 // DelProcInstByID DelProcInstByID
 func DelProcInstByID(id int) error {
-	return db.Where("id=?", id).Delete(&ProcInst{}).Error
+	return GetDB().Where("id=?", id).Delete(&ProcInst{}).Error
 }
 
 // DelProcInstByIDTx DelProcInstByIDTx
@@ -221,6 +224,6 @@ func (p *ProcInst) UpdateTx(tx *gorm.DB) error {
 // FindFinishedProc FindFinishedProc
 func FindFinishedProc() ([]*ProcInst, error) {
 	var datas []*ProcInst
-	err := db.Where("is_finished=1").Find(&datas).Error
+	err := GetDB().Where("is_finished=1").Find(&datas).Error
 	return datas, err
 }

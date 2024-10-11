@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"github.com/mumushuiding/util"
 
@@ -20,7 +20,7 @@ func SaveExecution(e *model.Execution) (ID int, err error) {
 	execLock.Lock()
 	defer execLock.Unlock()
 	// check if exists by procInst
-	yes, err := model.ExistsExecByProcInst(e.ProcInstID)
+	yes, err := model.ExistsExecByProcInst(int(e.ProcInstID))
 	if err != nil {
 		return 0, err
 	}
@@ -36,7 +36,7 @@ func SaveExecTx(e *model.Execution, tx *gorm.DB) (ID int, err error) {
 	execLock.Lock()
 	defer execLock.Unlock()
 	// check if exists by procInst
-	yes, err := model.ExistsExecByProcInst(e.ProcInstID)
+	yes, err := model.ExistsExecByProcInst(int(e.ProcInstID))
 	if err != nil {
 		return 0, err
 	}

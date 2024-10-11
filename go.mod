@@ -1,11 +1,17 @@
 module github.com/OnlyPiglet/go-workflow
 
-go 1.13
+go 1.22.4
 
 require (
-	github.com/go-sql-driver/mysql v1.5.0
-	github.com/jinzhu/gorm v1.9.16
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/mumushuiding/util v0.0.0-20200701095655-8251c1aeed79
 	github.com/robfig/cron v1.2.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	gorm.io/driver/mysql v1.5.7
+	gorm.io/gorm v1.25.12
+)
+
+require (
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )

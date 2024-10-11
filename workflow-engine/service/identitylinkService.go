@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/OnlyPiglet/go-workflow/workflow-engine/model"
-	"github.com/jinzhu/gorm"
 	"github.com/mumushuiding/util"
+	"gorm.io/gorm"
 )
 
 // SaveIdentitylinkTx SaveIdentitylinkTx

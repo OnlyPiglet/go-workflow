@@ -5,11 +5,15 @@ type ProcdefHistory struct {
 	Procdef
 }
 
+func (t *ProcdefHistory) TableName() string {
+	return "procdef_history"
+}
+
 // Save Save
 func (p *ProcdefHistory) Save() (ID int, err error) {
-	err = db.Create(p).Error
+	err = GetDB().Create(p).Error
 	if err != nil {
 		return 0, err
 	}
-	return p.ID, nil
+	return int(p.ID), nil
 }

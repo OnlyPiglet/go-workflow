@@ -1,21 +1,26 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // Identitylink 用户组同任务的关系
 type Identitylink struct {
-	Model
-	Group      string `json:"group,omitempty"`
-	Type       string `json:"type,omitempty"`
-	UserID     string `json:"userid,omitempty"`
-	UserName   string `json:"username,omitempty"`
-	TaskID     int    `json:"taskID,omitempty"`
-	Step       int    `json:"step"`
-	ProcInstID int    `json:"procInstID,omitempty"`
-	Company    string `json:"company,omitempty"`
-	Comment    string `json:"comment,omitempty"`
+	gorm.Model
+	Group      string   `json:"group,omitempty"`
+	Type       string   `json:"type,omitempty"`
+	UserID     string   `json:"userid,omitempty"`
+	UserName   string   `json:"username,omitempty"`
+	TaskID     int      `json:"taskID,omitempty"`
+	Step       int      `json:"step"`
+	ProcInstID int      `json:"procInstID,omitempty"`
+	ProcInst   ProcInst `json:"procInst" gorm:"references:ID;foreignKey:ProcInstID;constraint:OnUpdate:RESTRICT,OnDelete:CASCADE;"`
+	Company    string   `json:"company,omitempty"`
+	Comment    string   `json:"comment,omitempty"`
+}
+
+func (t *Identitylink) TableName() string {
+	return "identitylink"
 }
 
 // IdentityType 类型
@@ -52,8 +57,8 @@ func DelCandidateByProcInstID(procInstID int, tx *gorm.DB) error {
 
 // ExistsNotifierByProcInstIDAndGroup 抄送人是否已经存在
 func ExistsNotifierByProcInstIDAndGroup(procInstID int, group string) (bool, error) {
-	var count int
-	err := db.Model(&Identitylink{}).Where("identitylink.proc_inst_id=? and identitylink.group=? and identitylink.type=?", procInstID, group, IdentityTypes[NOTIFIER]).Count(&count).Error
+	var count int64
+	err := GetDB().Model(&Identitylink{}).Where("identitylink.proc_inst_id=? and identitylink.group=? and identitylink.type=?", procInstID, group, IdentityTypes[NOTIFIER]).Count(&count).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -69,8 +74,8 @@ func ExistsNotifierByProcInstIDAndGroup(procInstID int, group string) (bool, err
 // IfParticipantByTaskID IfParticipantByTaskID
 // 针对指定任务判断用户是否已经审批过了
 func IfParticipantByTaskID(userID, company string, taskID int) (bool, error) {
-	var count int
-	err := db.Model(&Identitylink{}).Where("user_id=? and company=? and task_id=?", userID, company, taskID).Count(&count).Error
+	var count int64
+	err := GetDB().Model(&Identitylink{}).Where("user_id=? and company=? and task_id=?", userID, company, taskID).Count(&count).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return false, nil
@@ -86,6 +91,6 @@ func IfParticipantByTaskID(userID, company string, taskID int) (bool, error) {
 // FindParticipantByProcInstID 查询参与审批的人
 func FindParticipantByProcInstID(procInstID int) ([]*Identitylink, error) {
 	var datas []*Identitylink
-	err := db.Select("id,user_id,user_name,step,comment").Where("proc_inst_id=? and type=?", procInstID, IdentityTypes[PARTICIPANT]).Order("id asc").Find(&datas).Error
+	err := GetDB().Select("id,user_id,user_name,step,comment").Where("proc_inst_id=? and type=?", procInstID, IdentityTypes[PARTICIPANT]).Order("id asc").Find(&datas).Error
 	return datas, err
 }

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"github.com/OnlyPiglet/go-workflow/workflow-engine/flow"
 	"github.com/OnlyPiglet/go-workflow/workflow-engine/model"
@@ -98,8 +98,8 @@ func (p *ProcessReceiver) StartProcessInstanceByID(variable *map[string]string) 
 	procInstID, err := CreateProcInstTx(&procInst, tx) // 事务
 	// fmt.Printf("启动流程实例耗时：%v", time.Since(times))
 	exec := &model.Execution{
-		ProcDefID:  prodefID,
-		ProcInstID: procInstID,
+		ProcDefID:  uint(prodefID),
+		ProcInstID: uint(procInstID),
 	}
 	task := &model.Task{
 		NodeID:        "开始",
@@ -142,7 +142,7 @@ func (p *ProcessReceiver) StartProcessInstanceByID(variable *map[string]string) 
 	//--------------------流转------------------
 	// times = time.Now()
 	// 流程移动到下一环节
-	err = MoveStage(nodeinfos, p.UserID, p.Username, p.Company, "启动流程", "", task.ID, procInstID, step, true, tx)
+	err = MoveStage(nodeinfos, p.UserID, p.Username, p.Company, "启动流程", "", int(task.ID), procInstID, step, true, tx)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -174,7 +174,7 @@ func CreateProcInstTx(procInst *model.ProcInst, tx *gorm.DB) (int, error) {
 // 设置流程结束
 func SetProcInstFinish(procInstID int, endTime string, tx *gorm.DB) error {
 	var p = &model.ProcInst{}
-	p.ID = procInstID
+	p.ID = uint(procInstID)
 	p.EndTime = endTime
 	p.IsFinished = true
 	return p.UpdateTx(tx)
@@ -235,31 +235,31 @@ func MoveFinishedProcInstToHistory() error {
 		}
 		tx := model.GetTx()
 		// 流程实例的task移至历史纪录
-		err = copyTaskToHistoryByProInstID(v.ID, tx)
+		err = copyTaskToHistoryByProInstID(int(v.ID), tx)
 		if err != nil {
 			tx.Rollback()
-			DelProcInstHistoryByID(v.ID)
+			DelProcInstHistoryByID(int(v.ID))
 			return err
 		}
 		// execution移至历史纪录
-		err = copyExecutionToHistoryByProcInstID(v.ID, tx)
+		err = copyExecutionToHistoryByProcInstID(int(v.ID), tx)
 		if err != nil {
 			tx.Rollback()
-			DelProcInstHistoryByID(v.ID)
+			DelProcInstHistoryByID(int(v.ID))
 			return err
 		}
 		// identitylink移至历史纪录
-		err = copyIdentitylinkToHistoryByProcInstID(v.ID, tx)
+		err = copyIdentitylinkToHistoryByProcInstID(int(v.ID), tx)
 		if err != nil {
 			tx.Rollback()
-			DelProcInstHistoryByID(v.ID)
+			DelProcInstHistoryByID(int(v.ID))
 			return err
 		}
 		// 删除流程实例
-		err = DelProcInstByIDTx(v.ID, tx)
+		err = DelProcInstByIDTx(int(v.ID), tx)
 		if err != nil {
 			tx.Rollback()
-			DelProcInstHistoryByID(v.ID)
+			DelProcInstHistoryByID(int(v.ID))
 			return err
 		}
 		tx.Commit()
