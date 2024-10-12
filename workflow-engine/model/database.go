@@ -36,7 +36,7 @@ func Setup() {
 	var err error
 	log.Println("数据库初始化！！")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", "root", "12345678", "127.0.0.1", "3306", "workflow")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", conf.DbUser, conf.DbPassword, conf.DbHost, conf.DbPort, conf.DbName)
 	idb, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:                                   newLogger,
 		DisableForeignKeyConstraintWhenMigrating: false,

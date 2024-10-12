@@ -1,0 +1,7 @@
+FROM registry.cn-hangzhou.aliyuncs.com/fordisk/go-infra:v1.0.0-linux-amd64
+
+WORKDIR /
+COPY /bin/linux/amd64/go-workflow /go-workflow
+COPY config.json /config.json
+EXPOSE 8080
+ENTRYPOINT ["/go-workflow"]
